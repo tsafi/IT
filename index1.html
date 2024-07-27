@@ -1,0 +1,496 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="Customizable fullscreen live Bitcoin price ticker. Realtime Bitcoin exchange rates are available in multiple currencies including USD, EUR, GBP, JPY, and KRW.">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="mobile-web-app-capable" content="yes">
+		
+		<script src="jquery.min.js"></script>
+		<script src="jquery-ui.min.js"></script>
+		<link rel="stylesheet" href="odometer-theme-minimal.css">
+		<script>window.odometerOptions = {auto: false}</script>
+		<script src="odometer.min.js"></script>
+		<script type="text/javascript">
+			var rst;
+			function sf() {
+				$("#symbolSpacer").width($("#symbolDigit").width());
+
+				var cf = parseInt(document.getElementById("p").style.fontSize);
+				var fs = Math.floor($(window).width()/s.width()*cf*.985*size/100);
+				var fs2 = Math.floor($(window).height()/s.height()*cf*1.2*size/100);
+				fs = Math.max(Math.min(fs, fs2), 1);
+				if (Math.abs(fs - cf) >= 2) {
+					p.css({fontSize: fs});
+				}
+			}
+
+			function setPref(key, val) {
+				var settings = JSON.parse(localStorage.getItem('settings') || '{}');
+				settings[key] = val;
+				localStorage.setItem('settings', JSON.stringify(settings));
+			}
+			function getPref(key) {
+				return JSON.parse(localStorage.getItem('settings') || '{}')[key];
+			}
+
+			function setAnimation(on) {
+				if (on) {
+					odometer.options.animation = null;
+					odometer.options.duration = 2000;
+				} else {
+					odometer.options.animation = 'count';
+					odometer.options.duration = 0;
+				}
+			}
+
+			function defaultIfNull(val, def) {
+				return val == null ? def : val;
+			}
+            var currency = "BTCUSDT";
+
+			var price = parseFloat("00000.00");
+			var symbols = {"eur":"\u20ac","gbp":"\u00a3","jpy":"\u00a5","krw":"\u20a9","try":"\u20ba","usd":"$"};
+
+			var prefersDark = Boolean(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+			var textColor = getPref('textColor') || (prefersDark ? '#bbbbbb' : '#000000');
+			var bgColor = getPref('bgColor') || (prefersDark ? '#000000' : '#bbbbbb');
+			var initialAnimation = defaultIfNull(getPref('animation'), true);
+			var colorAnimation =  defaultIfNull(getPref('colorAnimation'), true);
+			var size = getPref('size') || 100;
+			var initialFontWeight = getPref('fontWeight') || '500';
+			var initialFont = getPref('font') || 'Nunito';
+			var showCents = defaultIfNull(getPref('showCents'), true) && ['krw', 'jpy', 'try'].indexOf(currency) === -1;
+            var percentage;
+			$(function() {
+				$(document.body).css({color: textColor, backgroundColor: bgColor});
+				setAnimation(initialAnimation);
+				p.css({fontWeight: initialFontWeight, fontFamily: "'" + initialFont + "', sans-serif"});
+                
+			});
+
+			function getOdoPrice() {
+				return Math.round(showCents ? price * 100 : price);
+			}
+			function getOdoFormat() {
+				return showCents ? '(dddddddddd.dd)' : '(dddddddddd)';
+			}
+            var count = 0;
+			function np() {
+			///	console.log(currency)
+				$.get("https://api.binance.com/api/v1/ticker/24hr?symbol=" + currency)
+				.done(function (data) {
+                    //if(percentage<0){$("#profittxt").css({color:"#ff0000"})}else{ $("#profittxt").css({color:"#0ba30b"})}
+                    
+					var oldprice = price; var lastPrice = 
+					price = parseFloat(data.lastPrice); 
+                    
+                    if(currency == "BTCUSDT"){
+                      percentage =((data.lastPrice-25854.82)/25854.82);
+                    $("#profittxt").text("BTC : "+ ( percentage *100).toFixed(2)+"%");
+                        
+                    }else if(currency == "ETHUSDT"){
+                     percentage =((data.lastPrice-1886.1)/1886.1);
+                    $("#profittxt").text("ETH/ADI : "+ ( percentage *100).toFixed(2)+"%");
+                      // console.log(currency+ " WHAT currency");     
+                    }else if(currency == "SOLUSDT"){
+                    
+                     percentage =((data.lastPrice-75.11)/75.11);
+                    $("#profittxt").text("SOL : "+ ( percentage *100).toFixed(2)+"%");
+                     
+                    }else if(currency == "AVAXUSDT"){
+                     percentage =((data.lastPrice-13.65)/13.65);
+                    $("#profittxt").text("AVAX : "+ ( percentage *100).toFixed(2)+"%");
+                     
+                    }else if(currency == "RUNEUSDT"){
+                     percentage =((data.lastPrice-3.2085)/3.2085);
+                    $("#profittxt").text("RUNE : "+ ( percentage *100).toFixed(2)+"%");
+                       //console.log(currency+ " WHAT currency");     
+                    }
+                    else if(currency == "RENDERUSDT"){
+                     percentage =((data.lastPrice-1.7692)/1.7692);
+                    $("#profittxt").text("RENDER : "+ ( percentage *100).toFixed(2)+"%");
+                       //console.log(currency+ " WHAT currency");     
+                    }
+					odometer.options.format = getOdoFormat();
+					$("#t").html(getOdoPrice());
+
+                   
+
+                      
+                        //console.log(profit)
+                   
+					if (colorAnimation) {
+                        if(percentage<0){$("#profittxt").css({color:"#ff0000",'font-family':"Open+Sans"})}else{ $("#profittxt").css({color:"#0ba30b",'font-family':"JetBrains"})}
+						if (price > oldprice) {
+							p.css({color: "#178817"});
+						} else if (price < oldprice) {
+							p.css({color: "#CC171B"});
+						}
+					}
+					p.animate({color: textColor}, 2000);
+				})
+				.always(function() {
+					setTimeout(np, 9910);
+					count = count + 1;
+					//console.log(count)
+					if(count==3 && currency=="BTCUSDT"){
+                        
+						count=0;
+						//console.log(count + "swap btc isfirst");
+						currency = "ETHUSDT";
+				 var divElement = document.getElementById("curSelect");
+                // Get the img element within the div
+                  var imgElement = divElement.querySelector("img");
+              
+                
+                // Check if the img element exists
+				if (imgElement) {
+				
+				    setTimeout(() => {
+					divElement.removeChild(imgElement);
+                    
+					var newETHImgElement = document.createElement("img");
+					newETHImgElement.src = "eth.png";
+					newETHImgElement.width = "80";
+                    newETHImgElement.height = "80";
+                    newETHImgElement.alt = "ETH";
+					divElement.appendChild(newETHImgElement);}, "10000");//DEALY THE SWAP IMG
+                         }    
+					}else if(count==3 && currency=="ETHUSDT"){
+						count=0;
+						//console.log(count + "swap SOL");
+						currency = "SOLUSDT";
+				 var divElement = document.getElementById("curSelect");
+                // Get the img element within the div
+                  var imgElement = divElement.querySelector("img");
+                // Check if the img element exists
+				if (imgElement) {
+				
+				   setTimeout(() => {
+					divElement.removeChild(imgElement);
+					var newSOLImgElement = document.createElement("img");
+					newSOLImgElement.src = "sol.png";
+					newSOLImgElement.width = "80";
+                    newSOLImgElement.height = "80";
+                    newSOLImgElement.alt = "SOL";
+					divElement.appendChild(newSOLImgElement);}, "10000");//DEALY THE SWAP IMG
+                         }    
+					}else if(count==3 && currency=="SOLUSDT"){
+						count=0;
+						//console.log(count + "swap AVAX");
+						currency = "AVAXUSDT";
+				 var divElement = document.getElementById("curSelect");
+                // Get the img element within the div
+                  var imgElement = divElement.querySelector("img");
+                // Check if the img element exists
+				if (imgElement) {
+				
+				   setTimeout(() => {
+					divElement.removeChild(imgElement);
+					var newAVAXImgElement = document.createElement("img");
+					newAVAXImgElement.src = "avax.png";
+					newAVAXImgElement.width = "80";
+                    newAVAXImgElement.height ="80";
+                    newAVAXImgElement.alt = "AVAX";
+					divElement.appendChild(newAVAXImgElement);}, "10000");//DEALY THE SWAP IMG
+                         }    
+					}else if(count==3 && currency=="AVAXUSDT"){
+						count=0;
+						//console.log(count + "swap AVAX");
+						currency = "RUNEUSDT";
+				 var divElement = document.getElementById("curSelect");
+                // Get the img element within the div
+                  var imgElement = divElement.querySelector("img");
+                // Check if the img element exists
+				if (imgElement) {
+				
+				   setTimeout(() => {
+					divElement.removeChild(imgElement);
+					var newRUNEImgElement = document.createElement("img");
+					newRUNEImgElement.src = "rune.png";
+					newRUNEImgElement.width = "80";
+                    newRUNEImgElement.height = "80";
+                    newRUNEImgElement.alt = "RUNE";
+					divElement.appendChild(newRUNEImgElement);}, "10000");//DEALY THE SWAP IMG
+                        }    
+					}else if(count==3 && currency=="RUNEUSDT"){
+						count=0;
+						//console.log(count + "swap AVAX");
+						currency = "RENDERUSDT";
+				 var divElement = document.getElementById("curSelect");
+                // Get the img element within the div
+                  var imgElement = divElement.querySelector("img");
+                // Check if the img element exists
+				if (imgElement) {
+				
+				   setTimeout(() => {
+					divElement.removeChild(imgElement);
+					var newRUNEImgElement = document.createElement("img");
+					newRUNEImgElement.src = "render.png";
+					newRUNEImgElement.width = "80";
+                    newRUNEImgElement.height = "80";
+                    newRUNEImgElement.alt = "RENDER";
+					divElement.appendChild(newRUNEImgElement);}, "10000");//DEALY THE SWAP IMG
+                        }    
+					}else if(count==3 && currency=="RENDERUSDT"){
+						count=0;
+						//console.log(count + "swap RUNE");
+						currency = "BTCUSDT";
+				 var divElement = document.getElementById("curSelect");
+                // Get the img element within the div
+                  var imgElement = divElement.querySelector("img");
+                // Check if the img element exists
+				if (imgElement) {
+				
+				   setTimeout(() => {
+					divElement.removeChild(imgElement);
+					var newBTCImgElement = document.createElement("img");
+					newBTCImgElement.src = "bitcoin-btc-logo.png";
+					newBTCImgElement.width = "80";
+                    newBTCImgElement.height = "80";
+                    newBTCImgElement.alt = "BTC";
+					divElement.appendChild(newBTCImgElement);}, "10000");//DEALY THE SWAP IMG
+                         }    
+					}
+					
+				});///end alweys function
+			}///end function np
+		</script>
+		<style>
+			@media (prefers-color-scheme: dark) {
+				body {
+					background-color: #000;
+				}
+			}
+
+			.odometer-digit, .odometer-formatting-mark {
+				margin: 0 -0.01em;
+			}
+			.odometer-formatting-mark {
+				vertical-align: middle;
+				position: relative;
+				top: -.042em;
+			}
+
+			#controls .material-icons {
+				font-size: inherit;
+				vertical-align: middle;
+				cursor: pointer;
+				opacity: .8;
+			}
+
+			#settings {
+				position: fixed;
+				z-index: 10;
+				width: 100%;
+				max-width: 400px;
+				height: 100vh;
+				padding: 10px;
+				box-sizing: border-box;
+				top: 0;
+				left: 0;
+				right: 0;
+				margin: 0 auto;
+				border: 1px solid #000;
+				background-color: #ccc;
+				color: #000;
+				font-size: 16px;
+				display: none;
+				overflow-y: auto;
+			}
+
+			#settings p {
+				margin: 6px 0;
+			}
+			#settings button {
+				font-family: inherit;
+				font-size: 18px;
+				font-weight: bold;
+			}
+			#settings input {
+				vertical-align: middle;
+			}
+			#settings h3 {
+				margin-top: 18px;
+				margin-bottom: 8px;
+			}
+		</style>
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@200;300;400;600;700;900&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Mali:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Mulish:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	
+	</head>
+	<body style="margin:0; font-family:'Nunito', 'Trebuchet MS', sans-serif; overflow:hidden; width: 100vw; height: 100vh;">
+		<div id="p" style="text-align:center; position:absolute; top:50%; left:50%; transform: translate(-50%, -50%); white-space:nowrap; font-size:100px"><div id="s">
+			<span class="odometer odometer-auto-theme">
+				<div class="odometer-inside"><span class="odometer-digit"><span id="symbolSpacer" class="odometer-digit-spacer">8</span><span id="symbolDigit" class="odometer-digit-inner" style="left:initial"><span class="odometer-ribbon"><span class="odometer-ribbon-inner"><span class="odometer-value">$</span></span></span></span></span></div>
+			</span><span id="t">0</span>
+		</div></div>
+		<div id="controls" style="position: fixed; right: 0; bottom: 0; padding: 10px; font-size: 48px;">
+			<span class="material-icons" style="font-size: .9em" onclick="$('#settings').toggle(0)">&#xe8b8;</span>
+			<span class="material-icons enter-fs" 
+			      onclick="if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen(); else if (document.documentElement.webkitRequestFullscreen) document.documentElement.webkitRequestFullscreen();">
+				&#xe5d0;
+			</span><span class="material-icons exit-fs" 
+			             onclick="if (document.exitFullscreen) document.exitFullscreen(); else if (document.webkitExitFullscreen) document.webkitExitFullscreen();">
+				&#xe5d1;
+			</span>
+		</div>
+		<div id="settings"><form onsubmit="return false">
+			<div style="position: absolute; top: 0; right: 0; cursor: pointer; padding: 10px" onclick="$('#settings').hide(0)">
+				<span class="material-icons" style="font-size: 26px">&#xe5cd;</span>
+			</div>
+			<h2 style="margin: 0">Preferences</h2>
+			<h3>Colors</h3>
+			<p><label>Text color: <input id="textColorInput" type="color" oninput="setPref('textColor', document.body.style.color = window.textColor = this.value)"></label></p>
+			<p><label>Background color: <input id="bgColorInput" type="color" oninput="setPref('bgColor', document.body.style.backgroundColor = window.bgColor = this.value)"></label></p>
+			<h3>Visual Effects</h3>
+			<p><label>Animation: <input id="animationInput" type="checkbox" oninput="setAnimation(this.checked); setPref('animation', this.checked);"></label></p>
+			<p><label>Color animation: <input id="colorAnimationInput" type="checkbox" oninput="setPref('colorAnimation', colorAnimation = this.checked);"></label></p>
+			<h3>Price</h3>
+			<p><label>Show cents<small> (decimals)</small>: <input id="showCentsInput" type="checkbox" oninput="setPref('showCents', showCents = this.checked)"></label></p>
+			<h3>Text</h3>
+			<p>
+				Size: <input id="sizeInput" type="range" min="1" max="110" step="1" style="width: 200px" oninput="setPref('size', window.size = this.value); $('#sizeVal').text(this.value);">
+				<span id="sizeVal"></span>%
+			</p>
+			<p>
+				Font weight: <input id="fontWeightInput" type="range" min="200" max="900" step="100" style="width: 120px" 
+				                    oninput="p.css({fontWeight: this.value}); $('#fontWeightVal').text(fontWeights[this.value]); setPref('fontWeight', this.value)">
+				<span id="fontWeightVal"></span>
+			</p>
+			<p>
+				<div style="display:inline-block; vertical-align: top;">Font:</div>
+				<div style="display:inline-block" id="fontInputContainer"></div>
+			</p>
+			<p style="margin-top: 24px">
+				<button onclick="$('#settings').hide(0)">Done</button>
+				<button onclick="if (confirm('Are you sure you want to revert all custom settings?')) {localStorage.removeItem('settings'); location.reload();}">Reset</button>
+			</p>
+			<br><br>
+			<script>
+				var fontWeights = {
+					'200': 'Extra Light',
+					'300': 'Light',
+					'400': 'Normal',
+					'500': 'Medium',
+					'600': 'Semi Bold',
+					'700': 'Bold',
+					'800': 'Extra Bold',
+					'900': 'Black',
+				};
+
+				['Nunito', 'Mulish', 'Open Sans', 'JetBrains Mono', 'IBM Plex Serif', 'Source Serif Pro', 'Mali', 'Kalam'].forEach(function (font) {
+					var fontInput = $('<input name="fontInput" type="radio">')
+						.val(font)
+						.on('input', function(e) {
+							var font = e.target.value;
+							setPref('font', font);
+							p.css({fontFamily: "'" + font + "', sans-serif"});
+						});
+					var fontLabel = $('<label>')
+						.css({fontFamily: font})
+						.append(fontInput)
+						.append(font + ' ($432.10)');
+					$("#fontInputContainer").append(fontLabel).append($('<br>'));
+				});
+
+				$("[name=fontInput]");
+
+				$("#textColorInput").val(textColor);
+				$("#bgColorInput").val(bgColor);
+				$("#animationInput").prop("checked", initialAnimation);
+				$("#colorAnimationInput").prop("checked", colorAnimation);
+				$("#showCentsInput").prop("checked", showCents);
+				$("#sizeInput").val(size); $("#sizeVal").text(size);
+				$("#fontWeightInput").val(initialFontWeight); $("#fontWeightVal").text(fontWeights[initialFontWeight]);
+				$("[name=fontInput]").val([initialFont]);
+			</script>
+		</form></div>
+		<div id="curSelect" style="position: fixed; left: 0; bottom: 0; padding: 15px;">
+			<img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" width="80" height="80" alt="W3docs" />
+            <div id="profit" style="position: fixed; left: 120px; bottom: 20px; padding: 15px;font-size: 36px"><div id="profittxt" 3.78%</div>
+			<script>
+				//(function() {
+					//for (cur in symbols) {
+					//	var option = $("<option>").val(cur).text(cur.toUpperCase() + " - " + symbols[cur]);
+					//	$("#curSelect select").append(option);
+					//	$("#curSelect").append($("<a>").attr("href", cur).text(cur.toUpperCase()).css({fontSize:0, visibility:'hidden'}));
+					//}
+					//$("#curSelect select")
+					//	.val(currency)
+					//	.on('change', function(e) {
+					//		window.location.href = e.target.value;
+						//});
+				//})();
+			</script>
+		</div>
+		<script type="text/javascript">
+			var odometer = new Odometer({
+				el: document.getElementById('t'),
+				value: getOdoPrice(),
+				format: getOdoFormat(),
+			});
+			
+			var p = $("#p");
+			var s = $("#s");
+			sf();
+			setInterval(sf, 150);
+			
+			setTimeout(np, 5010);
+
+
+			function onFullscreenChange() {
+				if (document.fullscreenElement || document.webkitFullscreenElement) {
+					$(".enter-fs").hide(0);
+					$(".exit-fs").show(0);
+				} else {
+					$(".exit-fs").hide(0);
+					$(".enter-fs").show(0);
+				}
+			}
+			onFullscreenChange();
+			document.addEventListener('fullscreenchange', onFullscreenChange);
+			document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+
+			$(function() {
+				if (!document.documentElement.requestFullscreen && !document.documentElement.webkitRequestFullscreen)
+					$('.enter-fs').hide(0);
+			});
+
+
+			var hideControlsTimeout;
+			var ctas = $("#controls");
+             ///var ctas = $("#controls, #curSelect");will make it fade
+			function luminance(hex) {
+				var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+				return result ? 0.2126*parseInt(result[1], 16) + 0.7152*parseInt(result[2], 16) + 0.0722*parseInt(result[3], 16) : 0;
+			}
+
+			function activateControls() {
+				if (hideControlsTimeout) {
+					clearTimeout(hideControlsTimeout);
+				}
+				hideControlsTimeout = setTimeout(function() {ctas.hide(0);}, 3500);
+				$("#controls").css({color: luminance(bgColor) > 110 ? '#000' : '#fff'});
+				ctas.show(0);
+			}
+			activateControls();
+
+			document.body.addEventListener('click', activateControls);
+			document.body.addEventListener('mousemove', activateControls);
+			document.body.addEventListener('touchmove', activateControls);
+		</script>
+	</body>
+	<!-- Copyright BitcoinDisplay.com -->
+</html>
